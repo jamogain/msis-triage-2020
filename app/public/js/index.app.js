@@ -1,33 +1,66 @@
 var app = new Vue({
-  el: '#cardPaneLeft',
+  el: '#triagePage',
   data: {
-    message: 'Hello Vue!',
-    onePt: {
-      "patientGuid": "SOME-REALLY-LONG-1234",
-      "firstName": "Sylvia",
-      "lastName": "Hernandez",
-      "dob": "2012-09-01",
-      "sexAtBirth": "F",
-      "priority": "critical"
-    },
     ptList: [],
-    user: {},
-    times: 0
+    activePt: null,
+    triageForm: {
+      priority: null,
+      symptoms: ''
+    },
+    newPtForm: {}
+  },
+  computed: {
+    activePtName() {
+      return this.activePt ? this.activePt.lastName + ', ' + this.activePt.firstName : ''
+    }
   },
   methods: {
-    yell(msg) {
-      this.times = this.times + 1;
-      var msg = "Clicked " +this.times+ " times";
-      alert(msg);
+    newPtData() {
+      return {
+        firstName: "",
+        lastName: "",
+        dob: "",
+        sexAtBirth: ""
+      }
+    },
+    handleNewPtForm( evt ){
+      // evt.preventDefault();  // Redundant w/ Vue's submit.prevent
+
+      fetch('api/records/post.php', {
+        method:'POST',
+        body: JSON.stringify(this.newPtForm),
+        headers: {
+          "Content-Type": "application/json; charset=utf-8"
+        }
+      })
+      .then( response => response.json() )
+      .then( json => {
+        console.log("Returned from post:", json);
+        // TODO: test a result was returned!
+        this.ptList.push(json[0]);
+      });
+
+      console.log("Creating (POSTing)...!");
+      console.log(this.newPtForm);
+
+      this.newPtForm = this.newPtData();
+    },
+    handleTriageForm( evt ) {
+      console.log("Form submitted!");
+
+      this.triageForm.pt = this.activePt;
+      console.log(this.triageForm);
+
     }
   },
   created() {
-    fetch("dummy/pt-list.php")
+    fetch("api/records/")
     .then( response => response.json() )
     .then( json => {
       this.ptList = json;
 
       console.log(json)}
     );
+    this.newPtForm = this.newPtData();
   }
 })
